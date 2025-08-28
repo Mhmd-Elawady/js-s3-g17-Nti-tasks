@@ -10,4 +10,4 @@ function yourResult(name,gpa) {
         return welcome + "Great you passed";
     }
 }
-console.log(yourResult(name));
+console.log(yourResult(name,gpa));
