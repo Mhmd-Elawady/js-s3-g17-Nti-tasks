@@ -6,7 +6,8 @@ function openVideo() {
 
 document.querySelector(".custom-btn").addEventListener("click", function () {
   console.log("Button clicked!");
-
+  document.body.style.backgroundColor = "white";
+  document.body.style.color = "black";
   //   setTimeout(function () {
   //     alert("Welcome");
   //   }, 2000);
@@ -15,8 +16,3 @@ document.querySelector(".custom-btn").addEventListener("click", function () {
 // setInterval(function () {
 //   console.log("Hello");
 // }, 1000);
-
-document.querySelector(".custom-btn").addEventListener("click", function () {
-  document.body.style.backgroundColor = "white";
-  document.body.style.color = "black";
-});
