@@ -1,13 +1,22 @@
-
-let name = prompt("Enter your name: ");
-let gpa = prompt("Enter your GPA: ");
-
-function yourResult(name,gpa) {
-    let welcome = `Hello ${name}, your result is: `;
-    if (gpa < 3) {
-        return welcome + " you didn't pass";
-    } else {
-        return welcome + "Great you passed";
-    }
+function openVideo() {
+  window.open("https://youtu.be/U-l4ya3ejko?si=6hFt6JKnR35npjpu", "_blank");
 }
-console.log(yourResult(name,gpa));
+
+// Task 2 js
+
+document.querySelector(".custom-btn").addEventListener("click", function () {
+  console.log("Button clicked!");
+
+  //   setTimeout(function () {
+  //     alert("Welcome");
+  //   }, 2000);
+});
+
+// setInterval(function () {
+//   console.log("Hello");
+// }, 1000);
+
+document.querySelector(".custom-btn").addEventListener("click", function () {
+  document.body.style.backgroundColor = "white";
+  document.body.style.color = "black";
+});
