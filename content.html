@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مقدّمة عملية: الاتصال بقاعدة البيانات (MySQL) وإدخال/تعديل/حذف بسيط بـ PHP</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Tahoma,Arial,sans-serif;line-height:1.9;margin:24px;max-width:980px}
+    code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    pre{background:#f6f8fa;padding:14px;border-radius:10px;overflow:auto}
+    h1,h2,h3{margin-top:1.2em}
+    .tip{background:#fff8e1;border:1px solid #ffe082;padding:10px;border-radius:8px}
+    .bad{background:#ffebee;border:1px solid #ffcdd2;padding:10px;border-radius:8px}
+    .ok{background:#e8f5e9;border:1px solid #c8e6c9;padding:10px;border-radius:8px}
+    .small{color:#555;font-size:0.95em}
+    .kbd{font:inherit;background:#eee;border-radius:6px;padding:0 6px}
+    .grid{display:grid;gap:24px}
+    hr{border:none;border-top:1px solid #eee;margin:24px 0}
+    .section{padding:12px 0}
+    pre{direction: ltr;}
+  </style>
+</head>
+<body>
+  <h1>مقدّمة عملية: الاتصال بقاعدة البيانات (MySQL) وإدخال/تعديل/حذف بسيط بـ PHP (mysqli)</h1>
+
+  <div class="section">
+    <h2>0) يعني إيه قاعدة بيانات؟</h2>
+    <ul>
+      <li>مكان منظم نخزن فيه بيانات (زي جدول الطلبة: رقم، اسم، سن، فصل...).</li>
+      <li>MySQL: نظام إدارة قواعد بيانات مشهور بنستخدمه مع PHP.</li>
+      <li>SQL: لغة بنسأل/نعدّل بيها البيانات (SELECT, INSERT, UPDATE, DELETE).</li>
+    </ul>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>1) قبل ما نبدأ – إعداد قاعدة البيانات</h2>
+    <p>بعد ما تثبّت <strong>MySQL</strong> و<strong>PHP</strong> و<strong>Apache/XAMPP</strong>، اعمل قاعدة بيانات وجداول. مثال سريع:</p>
+<pre><code class="language-sql">-- إنشاء قاعدة بيانات باسم school_db
+CREATE DATABASE IF NOT EXISTS school_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+-- استخدام القاعدة
+USE school_db;
+
+-- إنشاء جدول بسيط للطلبة
+CREATE TABLE IF NOT EXISTS students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  age INT NOT NULL
+);
+</code></pre>
+    <p class="tip">لو شغال بـ phpMyAdmin: افتح phpMyAdmin &rarr; تبويب SQL &rarr; الصق الأكواد فوق &rarr; نفّذ.</p>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>2) الاتصال بقاعدة البيانات في PHP (mysqli – طريقة بسيطة)</h2>
+    <p>هنستخدم <em>mysqli</em> (الوضع الإجرائي) عشان سهل للبداية. مثال ملف: <span class="kbd">db.php</span></p>
+<pre><code class="language-php">&lt;?php
+// اكتب بيانات الاتصال بتاعتك
+$host = "localhost";   // لو السيرفر المحلي
+$user = "root";        // المستخدم الافتراضي في XAMPP غالباً
+$pass = "";            // الباسورد الافتراضي بيكون فاضي في XAMPP
+$db   = "school_db";   // اسم قاعدة البيانات اللي أنشأناها
+
+// 1) نعمل الاتصال
+$conn = mysqli_connect($host, $user, $pass, $db);
+
+// 2) نتأكد إن الاتصال نجح
+if (!$conn) {
+  die("فشل الاتصال بقاعدة البيانات: " . mysqli_connect_error());
+}
+
+// لو وصلنا هنا يبقى الاتصال ناجح
+// ممكن نطبع رسالة للتجربة وبعدين نشيلها
+// echo "متصل بقاعدة البيانات بنجاح!";
+?&gt;
+</code></pre>
+    <p class="ok">لو ظهرتلك صفحة بيضا من غير أخطاء، غالباً الاتصال ناجح. لو في مشكلة هتظهر رسالة خطأ واضحة.</p>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>3) إدخال بيانات (INSERT)</h2>
+    <p>ملف تجريبي: <span class="kbd">insert.php</span> (لازم يكون في نفس المجلد وفيه include لملف الاتصال):</p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+// مثال قيم ثابتة للتجربة
+$name = "Ahmed Ali";
+$age  = 16;
+
+// جملة SQL للإدخال
+$sql = "INSERT INTO students (name, age) VALUES ('$name', $age)";
+
+// تنفيذ
+if (mysqli_query($conn, $sql)) {
+  echo "تم إضافة الطالب بنجاح. رقم الـ ID: " . mysqli_insert_id($conn);
+} else {
+  echo "حصل خطأ في الإضافة: " . mysqli_error($conn);
+}
+
+// قفل الاتصال (اختياري هنا لأن السكربت هيقف)
+mysqli_close($conn);
+?&gt;
+</code></pre>
+    <p class="tip">إنت في الحقيقة المفروض تستخدم <strong>Prepared Statements</strong> للحماية من الحقن، بس كبداية هنمشي بالبساطة. (مذكورة ملاحظة عنها آخر الصفحة).</p>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>4) قراءة البيانات (SELECT)</h2>
+    <p>ملف: <span class="kbd">list.php</span></p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+$sql = "SELECT id, name, age FROM students";
+$result = mysqli_query($conn, $sql);
+
+if ($result && mysqli_num_rows($result) &gt; 0) {
+  echo "&lt;h3&gt;قائمة الطلبة&lt;/h3&gt;";
+  echo "&lt;table border='1' cellpadding='8'&gt;";
+  echo "&lt;tr&gt;&lt;th&gt;ID&lt;/th&gt;&lt;th&gt;الاسم&lt;/th&gt;&lt;th&gt;السن&lt;/th&gt;&lt;/tr&gt;";
+
+  while ($row = mysqli_fetch_assoc($result)) {
+    echo "&lt;tr&gt;";
+    echo "&lt;td&gt;" . $row['id']   . "&lt;/td&gt;";
+    echo "&lt;td&gt;" . $row['name'] . "&lt;/td&gt;";
+    echo "&lt;td&gt;" . $row['age']  . "&lt;/td&gt;";
+    echo "&lt;/tr&gt;";
+  }
+
+  echo "&lt;/table&gt;";
+} else {
+  echo "مفيش بيانات لعرضها.";
+}
+
+mysqli_close($conn);
+?&gt;
+</code></pre>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>5) تعديل البيانات (UPDATE)</h2>
+    <p>ملف: <span class="kbd">update.php</span> (كمثال نعدّل سن طالب برقم ID = 1)</p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+$id  = 1;   // رقم الطالب
+$age = 17;  // السن الجديد
+
+$sql = "UPDATE students SET age = $age WHERE id = $id";
+
+if (mysqli_query($conn, $sql)) {
+  if (mysqli_affected_rows($conn) &gt; 0) {
+    echo "تم تعديل بيانات الطالب رقم $id.";
+  } else {
+    echo "مفيش صفوف اتعدلت (يمكن ID مش موجود).";
+  }
+} else {
+  echo "حصل خطأ في التعديل: " . mysqli_error($conn);
+}
+
+mysqli_close($conn);
+?&gt;
+</code></pre>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>6) حذف البيانات (DELETE)</h2>
+    <p>ملف: <span class="kbd">delete.php</span> (مثال حذف الطالب برقم ID = 1)</p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+$id = 1;
+
+$sql = "DELETE FROM students WHERE id = $id";
+
+if (mysqli_query($conn, $sql)) {
+  if (mysqli_affected_rows($conn) &gt; 0) {
+    echo "تم حذف الطالب رقم $id.";
+  } else {
+    echo "مفيش صفوف اتحذفت (ID غير موجود).";
+  }
+} else {
+  echo "حصل خطأ في الحذف: " . mysqli_error($conn);
+}
+
+mysqli_close($conn);
+?&gt;
+</code></pre>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>7) تنظيم الملفات بسرعة</h2>
+    <ul>
+      <li><span class="kbd">db.php</span> &rarr; الاتصال.</li>
+      <li><span class="kbd">insert.php</span> &rarr; إدخال مثال.</li>
+      <li><span class="kbd">list.php</span> &rarr; عرض البيانات.</li>
+      <li><span class="kbd">update.php</span> &rarr; تعديل بسيط.</li>
+      <li><span class="kbd">delete.php</span> &rarr; حذف بسيط.</li>
+    </ul>
+    <p class="small">جرّب كل ملف لوحده في المتصفح بعد ما تحفظه في مجلد مشروعك داخل <span class="kbd">htdocs</span> لو بتستخدم XAMPP.</p>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>8) أشهر الأخطاء للمبتدئين (حلّها بسرعة)</h2>
+    <ul>
+      <li>اسم قاعدة البيانات غلط &rarr; صحّحه في <span class="kbd">db.php</span>.</li>
+      <li>المستخدم/الباسورد غلط &rarr; راجع إعدادات XAMPP/phpMyAdmin.</li>
+      <li>الجداول مش موجودة &rarr; نفّذ سكربت إنشاء الجدول في القسم (1).</li>
+      <li>نسيان <span class="kbd">include "db.php"</span> &rarr; اتأكد في كل ملف.</li>
+      <li>علامات اقتباس ناقصة في SQL &rarr; راجع السطر كويس.</li>
+    </ul>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>9) ملاحظة أمان سريعة (اختياري تعرفها الآن)</h2>
+    <p>طريقة الإدخال اللي فوق مناسبة للتعلّم فقط. في المشاريع الحقيقية لازم تستخدم <strong>Prepared Statements</strong> عشان تحمي نفسك من حقن SQL. مثال سريع (مش مطلوب تحفظه دلوقتي):</p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+$name = "Omar";
+$age  = 15;
+
+$stmt = mysqli_prepare($conn, "INSERT INTO students (name, age) VALUES (?, ?)");
+mysqli_stmt_bind_param($stmt, "si", $name, $age);
+mysqli_stmt_execute($stmt);
+
+if (mysqli_stmt_affected_rows($stmt) &gt; 0) {
+  echo "تمت الإضافة بأمان.";
+} else {
+  echo "في مشكلة أثناء الإضافة.";
+}
+
+mysqli_stmt_close($stmt);
+mysqli_close($conn);
+?&gt;
+</code></pre>
+  </div>
+
+  <hr/>
+
+  <div class="section">
+    <h2>10) خلاصة سريعة</h2>
+    <ol>
+      <li>أنشئ قاعدة البيانات والجدول.</li>
+      <li>اعمل ملف اتصال <span class="kbd">db.php</span> وتأكد انه ناجح.</li>
+      <li>اكتب ملفات بسيطة: <em>insert / list / update / delete</em>.</li>
+      <li>اختبر كل خطوة لوحدها.</li>
+    </ol>
+    <p class="ok">دلوقتي تقدر تطبق الأساسيات بثقة وبأسلوبك، ومن غير تعقيد.</p>
+  </div>
+
+
+</html>
+
+<hr/>
+
+<h1><strong>ADVANCED</strong> : فورم حفظ بيانات + تسجيل دخول وخروج + تعديل مستخدم</h1>
+
+<p>ده تكملة للـ 10 خطوات اللي شرحناها قبل. هنضيف:</p>
+<ol>
+<li>صفحة فيها فورم لإدخال بيانات طالب وحفظها في قاعدة البيانات.</li>
+<li>صفحات لتسجيل مستخدم جديد وتسجيل دخول.</li>
+<li>تحديد إذا المستخدم أدمن أو لا.</li>
+<li>تسجيل خروج.</li>
+<li>صفحة تعديل بيانات المستخدم.</li>
+</ol>
+
+<hr/>
+<h2>1) فورم إضافة طالب جديد</h2>
+<p>ملف: <span class="kbd">add_student.php</span></p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
+    $age = $_POST['age'];
+
+    $sql = "INSERT INTO students (name, age) VALUES ('$name', $age)";
+    if (mysqli_query($conn, $sql)) {
+        echo "تم حفظ بيانات الطالب.";
+    } else {
+        echo "خطأ: " . mysqli_error($conn);
+    }
+}
+?&gt;
+&lt;form method="post"&gt;
+    الاسم: &lt;input type="text" name="name" required&gt;&lt;br&gt;
+    السن: &lt;input type="number" name="age" required&gt;&lt;br&gt;
+    &lt;button type="submit"&gt;حفظ&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+
+<hr/>
+<h2>2) جدول المستخدمين</h2>
+<p>قبل تسجيل الدخول أو التسجيل، لازم ننشئ جدول للمستخدمين:</p>
+<pre><code class="language-sql">CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  is_admin TINYINT(1) DEFAULT 0
+);
+</code></pre>
+
+<hr/>
+<h2>3) تسجيل مستخدم جديد (Register)</h2>
+<p>ملف: <span class="kbd">register.php</span></p>
+<pre><code class="language-php">&lt;?php
+include "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $is_admin = isset($_POST['is_admin']) ? 1 : 0;
+
+    $sql = "INSERT INTO users (username, password, is_admin) VALUES ('$username', '$password', $is_admin)";
+    if (mysqli_query($conn, $sql)) {
+        echo "تم تسجيل المستخدم بنجاح.";
+    } else {
+        echo "خطأ: " . mysqli_error($conn);
+    }
+}
+?&gt;
+&lt;form method="post"&gt;
+    اسم المستخدم: &lt;input type="text" name="username" required&gt;&lt;br&gt;
+    كلمة المرور: &lt;input type="password" name="password" required&gt;&lt;br&gt;
+    أدمن؟ &lt;input type="checkbox" name="is_admin"&gt;&lt;br&gt;
+    &lt;button type="submit"&gt;تسجيل&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+
+<hr/>
+<h2>4) تسجيل دخول</h2>
+<p>ملف: <span class="kbd">login.php</span></p>
+<pre><code class="language-php">&lt;?php
+session_start();
+include "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $sql = "SELECT * FROM users WHERE username='$username'";
+    $result = mysqli_query($conn, $sql);
+    $user = mysqli_fetch_assoc($result);
+
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['is_admin'] = $user['is_admin'];
+        echo "تم تسجيل الدخول.";
+    } else {
+        echo "اسم المستخدم أو كلمة المرور غير صحيحة.";
+    }
+}
+?&gt;
+&lt;form method="post"&gt;
+    اسم المستخدم: &lt;input type="text" name="username" required&gt;&lt;br&gt;
+    كلمة المرور: &lt;input type="password" name="password" required&gt;&lt;br&gt;
+    &lt;button type="submit"&gt;دخول&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+
+<hr/>
+<h2>5) تسجيل خروج</h2>
+<p>ملف: <span class="kbd">logout.php</span></p>
+<pre><code class="language-php">&lt;?php
+session_start(); 
+session_unset(); <!-- remove all session variables -->
+session_destroy(); <!-- destroy the session -->
+echo "تم تسجيل الخروج.";
+?&gt;
+</code></pre>
+
+<hr/>
+<h2>6) تعديل بيانات المستخدم</h2>
+<p>ملف: <span class="kbd">edit_user.php</span></p>
+<pre><code class="language-php">&lt;?php
+session_start();
+include "db.php";
+
+if (!isset($_SESSION['user_id'])) {
+    die("يجب تسجيل الدخول أولاً.");
+}
+
+$id = $_SESSION['user_id'];
+
+// جلب البيانات القديمة
+$sql = "SELECT * FROM users WHERE id=$id";
+$result = mysqli_query($conn, $sql);
+$user = mysqli_fetch_assoc($result);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'];
+    $password = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : $user['password'];
+
+    $sql = "UPDATE users SET username='$username', password='$password' WHERE id=$id";
+    if (mysqli_query($conn, $sql)) {
+        echo "تم تعديل البيانات.";
+    } else {
+        echo "خطأ: " . mysqli_error($conn);
+    }
+}
+?&gt;
+&lt;form method="post"&gt;
+    اسم المستخدم: &lt;input type="text" name="username" value="&lt;?= $user['username'] ?&gt;" required&gt;&lt;br&gt;
+    كلمة المرور الجديدة (اتركها فارغة لو مش هتغيرها):
+    &lt;input type="password" name="password"&gt;&lt;br&gt;
+    &lt;button type="submit"&gt;تعديل&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+
+<hr/>
+<h2>7) ملاحظات ختامية</h2>
+<ul>
+<li>في المشاريع الحقيقية، لازم نستخدم Prepared Statements بدل وضع المتغيرات مباشرة في SQL.</li>
+<li>لازم نحمي الصفحات اللي بتحتاج دخول عن طريق التحقق من <span class="kbd">$_SESSION</span>.</li>
+<li>كده عندنا مثال بسيط لنظام CRUD ، ومعاه نظام تسجيل دخول/خروج بسيط مع تعديل للمستخدم.</li>
+</ul>
+
+</body>
+</html>
